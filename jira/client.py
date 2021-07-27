@@ -513,6 +513,7 @@ class JIRA(object):
         self,
         auth: Tuple[str, str],
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+        max_retries: int,
     ):
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)

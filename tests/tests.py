@@ -261,7 +261,22 @@ class OtherTests(JiraTestCase):
             str(JIRAError)  # to see that this does not raise an exception
             return
         assert False
-
+    
+    def test_basic_auth(self):
+        JIRA(
+            "http://localhost:2990/jira",
+            basic_auth=("admin", "admin"),
+            validate=True,
+            logging=False,
+        )
+    # def test_basic_auth_fails(self):
+    #     JIRA(
+    #         "http://localhost:2990/jira",
+    #         basic_auth=("xxx", "xxx"),
+    #         validate=True,
+    #         logging=False,
+    #     )
+    #
 
 class SessionTests(JiraTestCase):
     def test_session(self):
