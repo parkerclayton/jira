@@ -201,7 +201,7 @@ class JiraCookieAuth(AuthBase):
     """
 
     def __init__(
-        self, session: ResilientSession, _get_session: Callable, auth: Tuple[str, str]
+        self, session: ResilientSession, _get_session: Callable, auth: Tuple[str, str], max_retries: int
     ):
         """Cookie Based Authentication
 
@@ -213,13 +213,18 @@ class JiraCookieAuth(AuthBase):
         self._session = session
         self._get_session = _get_session
         self.__auth = auth
+        self._max_retries = max_retries
 
     def handle_401(self, response, **kwargs):
+        retry = 0
         if response.status_code != 401:
             return response
-        self.init_session()
-        response = self.process_original_request(response.request.copy())
-        return response
+        if retry < self._max_retreis:
+            retry += 1
+            self.init_session()
+            response = self.process_original_request(response.request.copy())
+            return response
+        raise JIRAError(f"Cookie auth failed after {retry}/{self._max_retries}")
 
     def process_original_request(self, original_request):
         self.update_cookies(original_request)
@@ -447,7 +452,7 @@ class JIRA(object):
         elif kerberos:
             self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         elif auth:
-            self._create_cookie_auth(auth, timeout)
+            self._create_cookie_auth(auth, max_retries, timeout)
             # always log in for cookie based auth, as we need a first request to be logged in
             validate = True
         else:
@@ -512,10 +517,11 @@ class JIRA(object):
     def _create_cookie_auth(
         self,
         auth: Tuple[str, str],
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+        max_retries: int,
+        timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
         self._session = ResilientSession(timeout=timeout)
-        self._session.auth = JiraCookieAuth(self._session, self.session, auth)
+        self._session.auth = JiraCookieAuth(self._session, self.session, auth, max_retries)
         self._session.verify = bool(self._options["verify"])
         client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
         self._session.cert = client_cert
