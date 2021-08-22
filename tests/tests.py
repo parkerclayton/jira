@@ -272,16 +272,10 @@ class OtherTests(JiraTestCase):
     
     def test_basic_auth_fail(self):
         JIRA(
-            "http://localhost:2990/jira",
             basic_auth=("xxx", "xxx"),
             validate=True,
             logging=False,
         )
-
-
-class SessionTests(JiraTestCase):
-    def test_session(self):
-        user = self.jira.session()
         self.assertIsNotNone(user.raw["self"])
         self.assertIsNotNone(user.raw["name"])
 
